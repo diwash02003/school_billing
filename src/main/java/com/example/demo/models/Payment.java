@@ -25,11 +25,15 @@ public class Payment {
     @GeneratedValue(strategy = GenerationType.IDENTITY)
     private Long id;
 
+    // Invoice number (e.g. INV-2025-0001)
+    @Column(name = "invoice_no", nullable = false, unique = true)
+    private String invoiceNo;
+
     @ManyToOne(fetch = FetchType.LAZY)
     @JoinColumn(name = "student_id", nullable = false)
     private Student student;
 
-    @Column(name = "payment_date", nullable = false)
+    @Column(name = "invoice_date", nullable = false)
     private LocalDate paymentDate;
 
     @PositiveOrZero(message = "Admission fee must be positive or zero")
@@ -81,6 +85,10 @@ public class Payment {
     @Column(name = "total_paid_amount")
     private Double totalPaidAmount = 0.0;
 
+    // Invoice status: CREATED / CANCELLED (paid is tracked by receipts)
+    @Column(name = "status", nullable = false)
+    private String status = "CREATED";
+
 
     // Constructors
     public Payment() {
@@ -88,36 +96,14 @@ public class Payment {
         this.createdAt = LocalDateTime.now();
     }
 
-    // Updated calculation method
     public void calculateTotals() {
-        int monthsCount = this.months.size();
+        int monthsCount = this.months == null ? 0 : this.months.size();
         double monthlyTotal = this.monthlyFee * monthsCount;
         double transportTotal = this.transportFee * monthsCount;
+        this.totalAmount = this.admissionFee + monthlyTotal + transportTotal + (this.othersFee == null ? 0 : this.othersFee);
+        this.grandTotal = this.totalAmount + (this.previousDue == null ? 0 : this.previousDue);
 
-        // Calculate total fees (without previous due)
-        this.totalAmount = this.admissionFee + monthlyTotal + transportTotal + this.othersFee;
-
-        // If totalPaidAmount is not set, assume full payment
-        if (this.totalPaidAmount == null || this.totalPaidAmount == 0) {
-            this.totalPaidAmount = this.totalAmount + this.previousDue;
-        }
-
-        // Grand total becomes the actual paid amount for partial payments
-        this.grandTotal = this.totalPaidAmount;
-
-        // Set admission paid flag
-        this.isAdmissionPaid = this.admissionFee > 0;
-    }
-
-    // Helper method to check if payment is partial
-    public Boolean isPartialPayment() {
-        double totalDue = this.totalAmount + this.previousDue;
-        return this.totalPaidAmount < totalDue;
-    }
-
-    // Helper method to get remaining due after this payment
-    public Double getRemainingDue() {
-        double totalDue = this.totalAmount + this.previousDue;
-        return Math.max(0, totalDue - this.totalPaidAmount);
+        // Set admission flag only if included in this invoice
+        this.isAdmissionPaid = this.admissionFee != null && this.admissionFee > 0;
     }
 }

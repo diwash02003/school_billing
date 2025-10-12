@@ -49,11 +49,8 @@ public class Student {
     @Column(nullable = false)
     private String studentClass;
 
-    //    @Column(name = "admission_date", nullable = false)
-//    private LocalDateTime admissionDate;
     @Column(name = "admission_date", nullable = false)
     private LocalDate admissionDate;
-
 
     @PositiveOrZero(message = "Admission fee must be positive or zero")
     @Column(name = "admission_fee")
@@ -85,6 +82,9 @@ public class Student {
 
     @OneToMany(mappedBy = "student", cascade = CascadeType.ALL, fetch = FetchType.LAZY)
     private List<Payment> payments = new ArrayList<>();
+
+    @OneToMany(mappedBy = "student", cascade = CascadeType.ALL, fetch = FetchType.LAZY)
+    private List<Receipt> receipts = new ArrayList<>();
 
     // Constructors
     public Student() {

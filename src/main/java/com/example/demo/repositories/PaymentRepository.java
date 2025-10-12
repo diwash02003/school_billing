@@ -32,4 +32,6 @@ public interface PaymentRepository extends JpaRepository<Payment, Long> {
 
     @Query("SELECT p FROM Payment p JOIN FETCH p.student WHERE p.student.id = :studentId")
     List<Payment> findAllByStudentIdWithStudent(@Param("studentId") Long studentId);
+
+    boolean existsByInvoiceNo(String invoiceNo);
 }

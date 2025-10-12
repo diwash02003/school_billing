@@ -16,6 +16,7 @@ import java.util.List;
 @Setter
 public class PaymentResponseDTO {
     private Long id;
+    private String invoiceNo;
     private Long studentId;
     private String studentName;
     private String studentClass;
@@ -26,9 +27,9 @@ public class PaymentResponseDTO {
     private Double othersFee;
     private String othersNote;
     private List<String> months;
-    private Double previousDue;
     private Double totalAmount;
+    private Double previousDue;
     private Double grandTotal;
+    private String status;
     private Boolean isAdmissionPaid;
-    private Double totalPaidAmount;
 }

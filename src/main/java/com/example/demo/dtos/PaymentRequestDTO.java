@@ -43,10 +43,4 @@ public class PaymentRequestDTO {
     @NotEmpty(message = "At least one month must be selected")
     @Size(min = 1, max = 12, message = "Must select between 1 and 12 months")
     private List<String> months;
-
-    // These will be calculated automatically
-    private Double previousDue = 0.0;
-    private Double totalAmount = 0.0;
-    private Double grandTotal = 0.0;
-    private Double totalPaidAmount = 0.0;
 }

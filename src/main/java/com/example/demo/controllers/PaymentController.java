@@ -8,6 +8,10 @@ import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
 import org.springframework.http.*;
 import org.springframework.web.bind.annotation.*;
+import com.example.demo.dtos.PaymentRequestDTO;
+import com.example.demo.dtos.PaymentResponseDTO;
+import org.springframework.http.*;
+import org.springframework.web.bind.annotation.*;
 
 import java.util.List;
 
@@ -16,6 +20,7 @@ import java.util.List;
  * @date 10/4/25
  * @description This file contains...
  */
+
 
 @RestController
 @RequestMapping("/api/payments")
@@ -26,10 +31,10 @@ public class PaymentController {
     private final BillService billService;
 
     @PostMapping
-    public ResponseEntity<?> createPayment(@Valid @RequestBody PaymentRequestDTO paymentRequest) {
+    public ResponseEntity<?> createInvoice(@Valid @RequestBody PaymentRequestDTO paymentRequest) {
         try {
-            PaymentResponseDTO createdPayment = paymentService.createPayment(paymentRequest);
-            return ResponseEntity.ok(createdPayment);
+            PaymentResponseDTO created = paymentService.createInvoice(paymentRequest);
+            return ResponseEntity.status(HttpStatus.CREATED).body(created);
         } catch (Exception e) {
             return ResponseEntity.badRequest().body(e.getMessage());
         }
@@ -44,8 +49,7 @@ public class PaymentController {
 
     @GetMapping("/student/{studentId}")
     public ResponseEntity<List<PaymentResponseDTO>> getPaymentsByStudent(@PathVariable Long studentId) {
-        List<PaymentResponseDTO> payments = paymentService.getPaymentsByStudentId(studentId);
-        return ResponseEntity.ok(payments);
+        return ResponseEntity.ok(paymentService.getPaymentsByStudentId(studentId));
     }
 
     @GetMapping("/student/{studentId}/status")
@@ -60,13 +64,11 @@ public class PaymentController {
         return ResponseEntity.ok(formData);
     }
 
-
     @GetMapping("/{paymentId}/bill")
     public ResponseEntity<?> generateBill(@PathVariable Long paymentId) {
         try {
-            byte[] pdfBytes = billService.generateBillPdf(paymentId);
-
-            String filename = billService.generateBillFileName(paymentId);
+            byte[] pdfBytes = billService.generateInvoicePdf(paymentId);
+            String filename = billService.generateInvoiceFileName(paymentId);
             ContentDisposition contentDisposition = ContentDisposition.builder("attachment")
                     .filename(filename)
                     .build();
