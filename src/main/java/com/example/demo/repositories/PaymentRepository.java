@@ -6,7 +6,7 @@ package com.example.demo.repositories;
  * @description This file contains...
  */
 
-import com.example.demo.models.Payment;
+import com.example.demo.models.Invoice;
 import org.springframework.data.jpa.repository.JpaRepository;
 import org.springframework.data.jpa.repository.Query;
 import org.springframework.data.repository.query.Param;
@@ -16,22 +16,22 @@ import java.util.List;
 import java.util.Optional;
 
 @Repository
-public interface PaymentRepository extends JpaRepository<Payment, Long> {
-    List<Payment> findByStudentIdOrderByPaymentDateDesc(Long studentId);
+public interface PaymentRepository extends JpaRepository<Invoice, Long> {
+    List<Invoice> findByStudentIdOrderByPaymentDateDesc(Long studentId);
 
-    @Query("SELECT p FROM Payment p JOIN FETCH p.student WHERE p.id = :id")
-    Optional<Payment> findByIdWithStudent(@Param("id") Long id);
+    @Query("SELECT p FROM Invoice p JOIN FETCH p.student WHERE p.id = :id")
+    Optional<Invoice> findByIdWithStudent(@Param("id") Long id);
 
-    @Query("SELECT CASE WHEN COUNT(p) > 0 THEN true ELSE false END FROM Payment p WHERE p.student.id = :studentId AND p.admissionFee > 0")
+    @Query("SELECT CASE WHEN COUNT(p) > 0 THEN true ELSE false END FROM Invoice p WHERE p.student.id = :studentId AND p.admissionFee > 0")
     boolean existsByStudentIdAndAdmissionFeePaid(@Param("studentId") Long studentId);
 
 
     // Fixed query to get all payments for a student and then extract months in service
-    @Query("SELECT p FROM Payment p WHERE p.student.id = :studentId")
-    List<Payment> findAllByStudentId(@Param("studentId") Long studentId);
+    @Query("SELECT p FROM Invoice p WHERE p.student.id = :studentId")
+    List<Invoice> findAllByStudentId(@Param("studentId") Long studentId);
 
-    @Query("SELECT p FROM Payment p JOIN FETCH p.student WHERE p.student.id = :studentId")
-    List<Payment> findAllByStudentIdWithStudent(@Param("studentId") Long studentId);
+    @Query("SELECT p FROM Invoice p JOIN FETCH p.student WHERE p.student.id = :studentId")
+    List<Invoice> findAllByStudentIdWithStudent(@Param("studentId") Long studentId);
 
     boolean existsByInvoiceNo(String invoiceNo);
 }

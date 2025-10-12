@@ -20,7 +20,7 @@ import java.util.List;
 @Table(name = "payments")
 @Getter
 @Setter
-public class Payment {
+public class Invoice {
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)
     private Long id;
@@ -91,7 +91,7 @@ public class Payment {
 
 
     // Constructors
-    public Payment() {
+    public Invoice() {
         this.paymentDate = LocalDate.now();
         this.createdAt = LocalDateTime.now();
     }

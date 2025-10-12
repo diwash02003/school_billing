@@ -17,7 +17,7 @@ import java.util.List;
 @Getter
 @AllArgsConstructor
 @NoArgsConstructor
-public class PaymentStatusDTO {
+public class InvoiceStatusDTO {
     private boolean hasPaidAdmission;
     private List<String> paidMonths;
     private List<String> availableMonths;

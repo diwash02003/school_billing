@@ -2,16 +2,14 @@ package com.example.demo.controllers;
 
 import com.example.demo.dtos.*;
 import com.example.demo.services.BillService;
-import com.example.demo.services.PaymentService;
+import com.example.demo.services.InvoiceService;
 
 import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
 import org.springframework.http.*;
 import org.springframework.web.bind.annotation.*;
-import com.example.demo.dtos.PaymentRequestDTO;
-import com.example.demo.dtos.PaymentResponseDTO;
-import org.springframework.http.*;
-import org.springframework.web.bind.annotation.*;
+import com.example.demo.dtos.InvoiceRequestDTO;
+import com.example.demo.dtos.InvoiceResponseDTO;
 
 import java.util.List;
 
@@ -26,14 +24,14 @@ import java.util.List;
 @RequestMapping("/api/payments")
 @RequiredArgsConstructor
 @CrossOrigin(origins = "${cors.allowed-origins:http://localhost:3000}")
-public class PaymentController {
-    private final PaymentService paymentService;
+public class InvoiceController {
+    private final InvoiceService invoiceService;
     private final BillService billService;
 
     @PostMapping
-    public ResponseEntity<?> createInvoice(@Valid @RequestBody PaymentRequestDTO paymentRequest) {
+    public ResponseEntity<?> createInvoice(@Valid @RequestBody InvoiceRequestDTO paymentRequest) {
         try {
-            PaymentResponseDTO created = paymentService.createInvoice(paymentRequest);
+            InvoiceResponseDTO created = invoiceService.createInvoice(paymentRequest);
             return ResponseEntity.status(HttpStatus.CREATED).body(created);
         } catch (Exception e) {
             return ResponseEntity.badRequest().body(e.getMessage());
@@ -41,26 +39,26 @@ public class PaymentController {
     }
 
     @GetMapping("/{id}")
-    public ResponseEntity<PaymentResponseDTO> getPaymentById(@PathVariable Long id) {
-        return paymentService.getPaymentById(id)
+    public ResponseEntity<InvoiceResponseDTO> getInvoiceById(@PathVariable Long id) {
+        return invoiceService.getPaymentById(id)
                 .map(ResponseEntity::ok)
                 .orElse(ResponseEntity.notFound().build());
     }
 
     @GetMapping("/student/{studentId}")
-    public ResponseEntity<List<PaymentResponseDTO>> getPaymentsByStudent(@PathVariable Long studentId) {
-        return ResponseEntity.ok(paymentService.getPaymentsByStudentId(studentId));
+    public ResponseEntity<List<InvoiceResponseDTO>> getInvoiceByStudent(@PathVariable Long studentId) {
+        return ResponseEntity.ok(invoiceService.getPaymentsByStudentId(studentId));
     }
 
     @GetMapping("/student/{studentId}/status")
-    public ResponseEntity<PaymentStatusDTO> getPaymentStatus(@PathVariable Long studentId) {
-        PaymentStatusDTO status = paymentService.getPaymentStatus(studentId);
+    public ResponseEntity<InvoiceStatusDTO> getInvoiceStatus(@PathVariable Long studentId) {
+        InvoiceStatusDTO status = invoiceService.getPaymentStatus(studentId);
         return ResponseEntity.ok(status);
     }
 
     @GetMapping("/student/{studentId}/form-data")
-    public ResponseEntity<PaymentFormDataDTO> getPaymentFormData(@PathVariable Long studentId) {
-        PaymentFormDataDTO formData = paymentService.getPaymentFormData(studentId);
+    public ResponseEntity<InvoiceFormDataDTO> getInvoiceFormData(@PathVariable Long studentId) {
+        InvoiceFormDataDTO formData = invoiceService.getPaymentFormData(studentId);
         return ResponseEntity.ok(formData);
     }
 

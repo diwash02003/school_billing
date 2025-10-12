@@ -13,7 +13,7 @@ import java.util.List;
 
 @Getter
 @Setter
-public class PaymentFormDataDTO {
+public class InvoiceFormDataDTO {
     private Long studentId;
     private String studentName;
     private String studentClass;

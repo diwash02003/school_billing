@@ -18,7 +18,7 @@ import java.util.List;
 
 @Getter
 @Setter
-public class PaymentRequestDTO {
+public class InvoiceRequestDTO {
     @NotNull(message = "Student ID is required")
     private Long studentId;
 

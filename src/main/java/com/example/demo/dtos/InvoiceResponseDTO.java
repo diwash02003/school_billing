@@ -14,7 +14,7 @@ import java.util.List;
 
 @Getter
 @Setter
-public class PaymentResponseDTO {
+public class InvoiceResponseDTO {
     private Long id;
     private String invoiceNo;
     private Long studentId;

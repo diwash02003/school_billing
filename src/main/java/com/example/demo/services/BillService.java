@@ -1,7 +1,7 @@
 package com.example.demo.services;
 
 import com.example.demo.exceptions.PaymentValidationException;
-import com.example.demo.models.Payment;
+import com.example.demo.models.Invoice;
 import com.example.demo.models.Receipt;
 import com.example.demo.repositories.PaymentRepository;
 import com.example.demo.repositories.ReceiptRepository;
@@ -31,7 +31,7 @@ public class BillService {
 
     // ---------------- INVOICE PDF ----------------
     public byte[] generateInvoicePdf(Long paymentId) {
-        Payment payment = paymentRepository.findByIdWithStudent(paymentId)
+        Invoice invoice = paymentRepository.findByIdWithStudent(paymentId)
                 .orElseThrow(() -> new PaymentValidationException("Payment not found"));
 
         try (ByteArrayOutputStream out = new ByteArrayOutputStream()) {
@@ -52,16 +52,16 @@ public class BillService {
             // Info table
             PdfPTable infoTable = new PdfPTable(2);
             infoTable.setWidthPercentage(100);
-            String formattedDate = payment.getPaymentDate() != null
-                    ? payment.getPaymentDate().format(DateTimeFormatter.ofPattern("dd MMM yyyy"))
+            String formattedDate = invoice.getPaymentDate() != null
+                    ? invoice.getPaymentDate().format(DateTimeFormatter.ofPattern("dd MMM yyyy"))
                     : "";
 
-            infoTable.addCell(getCell("Bill No: " + payment.getInvoiceNo(), PdfPCell.ALIGN_LEFT));
+            infoTable.addCell(getCell("Bill No: " + invoice.getInvoiceNo(), PdfPCell.ALIGN_LEFT));
             infoTable.addCell(getCell("Date: " + formattedDate, PdfPCell.ALIGN_RIGHT));
-            infoTable.addCell(getCell("Name: " + payment.getStudent().getFullName(), PdfPCell.ALIGN_LEFT));
-            infoTable.addCell(getCell("Class: " + payment.getStudent().getStudentClass(), PdfPCell.ALIGN_RIGHT));
+            infoTable.addCell(getCell("Name: " + invoice.getStudent().getFullName(), PdfPCell.ALIGN_LEFT));
+            infoTable.addCell(getCell("Class: " + invoice.getStudent().getStudentClass(), PdfPCell.ALIGN_RIGHT));
 
-            String months = payment.getMonths() == null || payment.getMonths().isEmpty() ? "-" : String.join(", ", payment.getMonths());
+            String months = invoice.getMonths() == null || invoice.getMonths().isEmpty() ? "-" : String.join(", ", invoice.getMonths());
             PdfPCell monthCell = new PdfPCell(new Phrase("Payment for the Month of: " + months));
             monthCell.setColspan(2);
             monthCell.setBorder(Rectangle.NO_BORDER);
@@ -81,18 +81,18 @@ public class BillService {
             table.addCell(headerCell("Amount"));
 
             int sn = 1;
-            addFeeRow(table, sn++, "Admission Fee", payment.getAdmissionFee());
-            addFeeRow(table, sn++, "Monthly Fee", payment.getMonthlyFee());
-            addFeeRow(table, sn++, "Transport Fee", payment.getTransportFee());
+            addFeeRow(table, sn++, "Admission Fee", invoice.getAdmissionFee());
+            addFeeRow(table, sn++, "Monthly Fee", invoice.getMonthlyFee());
+            addFeeRow(table, sn++, "Transport Fee", invoice.getTransportFee());
             String othersNote = "Others";
-            if (payment.getOthersNote() != null && !payment.getOthersNote().trim().isEmpty()) {
-                othersNote = "Others (" + payment.getOthersNote() + ")";
+            if (invoice.getOthersNote() != null && !invoice.getOthersNote().trim().isEmpty()) {
+                othersNote = "Others (" + invoice.getOthersNote() + ")";
             }
-            addFeeRow(table, sn++, othersNote, payment.getOthersFee()); // Always show Others row
+            addFeeRow(table, sn++, othersNote, invoice.getOthersFee()); // Always show Others row
 
-            addTotalRow(table, "Total Amount", payment.getTotalAmount());
-            addTotalRow(table, "Previous Due", payment.getPreviousDue());
-            addTotalRow(table, "Grand Total", payment.getGrandTotal());
+            addTotalRow(table, "Total Amount", invoice.getTotalAmount());
+            addTotalRow(table, "Previous Due", invoice.getPreviousDue());
+            addTotalRow(table, "Grand Total", invoice.getGrandTotal());
 
             document.add(table);
 
@@ -325,13 +325,13 @@ public class BillService {
 
     // ------------------ FILE NAME GENERATORS ------------------
     public String generateInvoiceFileName(Long paymentId) {
-        Payment payment = paymentRepository.findByIdWithStudent(paymentId)
+        Invoice invoice = paymentRepository.findByIdWithStudent(paymentId)
                 .orElseThrow(() -> new PaymentValidationException("Payment not found"));
 
-        String firstName = payment.getStudent().getFullName().split(" ")[0];
-        String monthsPart = (payment.getMonths() == null || payment.getMonths().isEmpty())
+        String firstName = invoice.getStudent().getFullName().split(" ")[0];
+        String monthsPart = (invoice.getMonths() == null || invoice.getMonths().isEmpty())
                 ? "NA"
-                : String.join("_", payment.getMonths());
+                : String.join("_", invoice.getMonths());
 
         firstName = firstName.replaceAll("[^a-zA-Z0-9]", "_");
         monthsPart = monthsPart.replaceAll("[^a-zA-Z0-9_]", "_");

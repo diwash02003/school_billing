@@ -81,7 +81,7 @@ public class Student {
     private LocalDateTime updatedAt;
 
     @OneToMany(mappedBy = "student", cascade = CascadeType.ALL, fetch = FetchType.LAZY)
-    private List<Payment> payments = new ArrayList<>();
+    private List<Invoice> invoices = new ArrayList<>();
 
     @OneToMany(mappedBy = "student", cascade = CascadeType.ALL, fetch = FetchType.LAZY)
     private List<Receipt> receipts = new ArrayList<>();

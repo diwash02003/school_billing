@@ -20,7 +20,7 @@ public interface StudentRepository extends JpaRepository<Student, Long> {
 
     List<Student> findByIsActiveTrue();
 
-    @Query("SELECT s FROM Student s LEFT JOIN FETCH s.payments WHERE s.id = :id")
+    @Query("SELECT s FROM Student s LEFT JOIN FETCH s.invoices WHERE s.id = :id")
     Optional<Student> findByIdWithPayments(@Param("id") Long id);
 
     boolean existsByPhone(String phone);

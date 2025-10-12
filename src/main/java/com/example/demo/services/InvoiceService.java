@@ -1,12 +1,12 @@
 package com.example.demo.services;
 
-import com.example.demo.dtos.PaymentFormDataDTO;
-import com.example.demo.dtos.PaymentRequestDTO;
-import com.example.demo.dtos.PaymentResponseDTO;
-import com.example.demo.dtos.PaymentStatusDTO;
+import com.example.demo.dtos.InvoiceFormDataDTO;
+import com.example.demo.dtos.InvoiceRequestDTO;
+import com.example.demo.dtos.InvoiceResponseDTO;
+import com.example.demo.dtos.InvoiceStatusDTO;
 import com.example.demo.repositories.PaymentRepository;
 import com.example.demo.exceptions.PaymentValidationException;
-import com.example.demo.models.Payment;
+import com.example.demo.models.Invoice;
 import com.example.demo.models.Student;
 import com.example.demo.repositories.StudentRepository;
 import lombok.RequiredArgsConstructor;
@@ -28,13 +28,13 @@ import java.util.stream.Collectors;
 @Service
 @Transactional
 @RequiredArgsConstructor
-public class PaymentService {
+public class InvoiceService {
 
     private final PaymentRepository paymentRepository;
     private final StudentRepository studentRepository;
     private final SequenceService sequenceService;
 
-    public PaymentResponseDTO createInvoice(PaymentRequestDTO req) {
+    public InvoiceResponseDTO createInvoice(InvoiceRequestDTO req) {
         Student student = studentRepository.findById(req.getStudentId())
                 .orElseThrow(() -> new PaymentValidationException("Student not found"));
 
@@ -42,7 +42,7 @@ public class PaymentService {
         if (req.getAdmissionFee() != null && req.getAdmissionFee() > 0) {
             boolean admissionAlreadyInvoiced = paymentRepository.findByStudentIdOrderByPaymentDateDesc(student.getId())
                     .stream()
-                    .anyMatch(Payment::getIsAdmissionPaid);
+                    .anyMatch(Invoice::getIsAdmissionPaid);
             if (admissionAlreadyInvoiced) {
                 throw new PaymentValidationException("Admission fee already invoiced for this student");
             }
@@ -60,12 +60,12 @@ public class PaymentService {
             throw new PaymentValidationException("Months already invoiced: " + String.join(", ", duplicateMonths));
         }
 
-        Payment payment = convertToEntity(req, student);
-        payment.setInvoiceNo(sequenceService.generateInvoiceNo());
-        payment.setPreviousDue(student.getPreviousDue() == null ? 0.0 : student.getPreviousDue());
-        payment.calculateTotals();
+        Invoice invoice = convertToEntity(req, student);
+        invoice.setInvoiceNo(sequenceService.generateInvoiceNo());
+        invoice.setPreviousDue(student.getPreviousDue() == null ? 0.0 : student.getPreviousDue());
+        invoice.calculateTotals();
 
-        Payment saved = paymentRepository.save(payment);
+        Invoice saved = paymentRepository.save(invoice);
 
         // 🔹 Update student's previous due
         double newDue = saved.getGrandTotal(); // Grand total = totalAmount + previousDue
@@ -73,20 +73,20 @@ public class PaymentService {
         return convertToDTO(saved);
     }
 
-    public Optional<PaymentResponseDTO> getPaymentById(Long id) {
+    public Optional<InvoiceResponseDTO> getPaymentById(Long id) {
         return paymentRepository.findByIdWithStudent(id)
                 .map(this::convertToDTO);
     }
 
-    public List<PaymentResponseDTO> getPaymentsByStudentId(Long studentId) {
+    public List<InvoiceResponseDTO> getPaymentsByStudentId(Long studentId) {
         return paymentRepository.findByStudentIdOrderByPaymentDateDesc(studentId)
                 .stream()
                 .map(this::convertToDTO)
                 .collect(Collectors.toList());
     }
 
-    private PaymentResponseDTO convertToDTO(Payment p) {
-        PaymentResponseDTO dto = new PaymentResponseDTO();
+    private InvoiceResponseDTO convertToDTO(Invoice p) {
+        InvoiceResponseDTO dto = new InvoiceResponseDTO();
         dto.setId(p.getId());
         dto.setInvoiceNo(p.getInvoiceNo());
         dto.setStudentId(p.getStudent().getId());
@@ -107,8 +107,8 @@ public class PaymentService {
         return dto;
     }
 
-    private Payment convertToEntity(PaymentRequestDTO dto, Student student) {
-        Payment p = new Payment();
+    private Invoice convertToEntity(InvoiceRequestDTO dto, Student student) {
+        Invoice p = new Invoice();
         p.setStudent(student);
         p.setPaymentDate(dto.getPaymentDate());
         p.setAdmissionFee(dto.getAdmissionFee());
@@ -120,7 +120,7 @@ public class PaymentService {
         return p;
     }
 
-    public PaymentStatusDTO getPaymentStatus(Long studentId) {
+    public InvoiceStatusDTO getPaymentStatus(Long studentId) {
         Optional<Student> studentOpt = studentRepository.findById(studentId);
         if (studentOpt.isEmpty()) {
             throw new PaymentValidationException("Student not found");
@@ -129,17 +129,17 @@ public class PaymentService {
         boolean hasPaidAdmission = paymentRepository.existsByStudentIdAndAdmissionFeePaid(studentId);
         List<String> paidMonths = getPaidMonths(studentId);
         List<String> availableMonths = NEPALI_MONTHS.stream().filter(month -> !paidMonths.contains(month)).collect(Collectors.toList());
-        return new PaymentStatusDTO(hasPaidAdmission, paidMonths, availableMonths, student.getPreviousDue());
+        return new InvoiceStatusDTO(hasPaidAdmission, paidMonths, availableMonths, student.getPreviousDue());
     }
 
-    public PaymentFormDataDTO getPaymentFormData(Long studentId) {
+    public InvoiceFormDataDTO getPaymentFormData(Long studentId) {
         Optional<Student> studentOpt = studentRepository.findById(studentId);
         if (studentOpt.isEmpty()) {
             throw new PaymentValidationException("Student not found");
         }
         Student student = studentOpt.get();
-        PaymentStatusDTO status = getPaymentStatus(studentId);
-        PaymentFormDataDTO formData = new PaymentFormDataDTO();
+        InvoiceStatusDTO status = getPaymentStatus(studentId);
+        InvoiceFormDataDTO formData = new InvoiceFormDataDTO();
         formData.setStudentId(studentId);
         formData.setStudentName(student.getFullName());
         formData.setStudentClass(student.getStudentClass());
@@ -154,10 +154,10 @@ public class PaymentService {
     }
 
     List<String> getPaidMonths(Long studentId) {
-        List<Payment> payments = paymentRepository.findAllByStudentId(studentId);
+        List<Invoice> invoices = paymentRepository.findAllByStudentId(studentId);
         List<String> allPaidMonths = new ArrayList<>();
-        for (Payment payment : payments) {
-            allPaidMonths.addAll(payment.getMonths());
+        for (Invoice invoice : invoices) {
+            allPaidMonths.addAll(invoice.getMonths());
         }
         return allPaidMonths;
     }
