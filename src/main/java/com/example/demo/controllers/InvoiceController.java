@@ -23,7 +23,7 @@ import java.util.List;
 @RestController
 @RequestMapping("/api/payments")
 @RequiredArgsConstructor
-@CrossOrigin(origins = "${cors.allowed-origins:http://localhost:3000}")
+@CrossOrigin(origins = {"http://localhost:3000", "http://billing.com", "http://www.billing.com"})
 public class InvoiceController {
     private final InvoiceService invoiceService;
     private final BillService billService;
