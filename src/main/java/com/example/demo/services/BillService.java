@@ -9,6 +9,7 @@ import com.itextpdf.text.*;
 import com.itextpdf.text.pdf.PdfPCell;
 import com.itextpdf.text.pdf.PdfPTable;
 import com.itextpdf.text.pdf.PdfWriter;
+import com.itextpdf.text.pdf.draw.LineSeparator;
 import lombok.RequiredArgsConstructor;
 import org.springframework.core.io.ClassPathResource;
 import org.springframework.stereotype.Service;
@@ -104,79 +105,6 @@ public class BillService {
             return out.toByteArray();
         } catch (Exception e) {
             throw new RuntimeException("Error generating invoice PDF", e);
-        }
-    }
-
-    // ---------------- RECEIPT PDF ----------------
-    public byte[] generateReceiptPdfOld(Long receiptId) {
-        Receipt r = receiptRepository.findById(receiptId)
-                .orElseThrow(() -> new PaymentValidationException("Receipt not found"));
-
-        try (ByteArrayOutputStream out = new ByteArrayOutputStream()) {
-            Document document = new Document(PageSize.A4, 50, 50, 50, 50);
-            PdfWriter.getInstance(document, out);
-            document.open();
-
-            // Header
-            document.add(createHeader());
-            document.add(Chunk.NEWLINE);
-
-            // Title
-            Paragraph title = new Paragraph("RECEIPT", new Font(Font.FontFamily.HELVETICA, 16, Font.BOLD));
-            title.setAlignment(Element.ALIGN_CENTER);
-            title.setSpacingAfter(10f);
-            document.add(title);
-
-            // Info table
-            PdfPTable infoTable = new PdfPTable(2);
-            infoTable.setWidthPercentage(100);
-            String formattedDate = r.getReceiptDate() != null
-                    ? r.getReceiptDate().format(DateTimeFormatter.ofPattern("dd MMM yyyy"))
-                    : "";
-
-            infoTable.addCell(getCell("Receipt No: " + r.getReceiptNo(), PdfPCell.ALIGN_LEFT));
-            infoTable.addCell(getCell("Date: " + formattedDate, PdfPCell.ALIGN_RIGHT));
-            infoTable.addCell(getCell("Name: " + r.getStudent().getFullName(), PdfPCell.ALIGN_LEFT));
-            infoTable.addCell(getCell("Class: " + r.getStudent().getStudentClass(), PdfPCell.ALIGN_RIGHT));
-
-            document.add(infoTable);
-            document.add(Chunk.NEWLINE);
-
-            // Payment table
-            PdfPTable table = new PdfPTable(2);
-            table.setWidthPercentage(60);
-            table.setHorizontalAlignment(Element.ALIGN_CENTER);
-
-            table.addCell(headerCell("Particular"));
-            table.addCell(headerCell("Amount"));
-
-            table.addCell(valueCellLeft("Paid Amount"));
-            table.addCell(valueCell(r.getPaidAmount()));
-
-            table.addCell(valueCellLeft("Previous Due"));
-            table.addCell(valueCell(r.getPreviousDueSnapshot()));
-
-            table.addCell(valueCellLeft("Remaining Due"));
-            table.addCell(valueCell(r.getRemainingDue()));
-
-            table.addCell(valueCellLeft("Payment Method"));
-            table.addCell(valueCell(r.getPaymentMethod()));
-
-            if (r.getRemarks() != null && !r.getRemarks().isEmpty()) {
-                table.addCell(valueCellLeft("Remarks"));
-                table.addCell(valueCell(r.getRemarks()));
-            }
-
-            document.add(table);
-
-            // Signature
-            document.add(Chunk.NEWLINE);
-            document.add(createSignatureTable());
-
-            document.close();
-            return out.toByteArray();
-        } catch (Exception e) {
-            throw new RuntimeException("Error generating receipt PDF", e);
         }
     }
 
@@ -374,29 +302,62 @@ public class BillService {
             title.setSpacingAfter(20f);
             document.add(title);
 
-            // Horizontal line
-            Paragraph line1 = new Paragraph("__________________________________________________________________________");
-            line1.setAlignment(Element.ALIGN_CENTER);
-            line1.setSpacingAfter(15f);
-            document.add(line1);
+            PdfPTable metaTable = new PdfPTable(2);
+            metaTable.setWidthPercentage(100);
+            metaTable.setWidths(new float[]{1, 1});
+            metaTable.setSpacingAfter(4f);
+
+            // LEFT → Receipt No
+            PdfPCell leftCell = new PdfPCell(
+                    new Phrase(
+                            "Receipt No: " + (r.getReceiptNo() != null ? r.getReceiptNo() : "______"),
+                            new Font(Font.FontFamily.HELVETICA, 10, Font.BOLD)
+                    )
+            );
+            leftCell.setBorder(PdfPCell.NO_BORDER);
+            leftCell.setHorizontalAlignment(Element.ALIGN_LEFT);
+            metaTable.addCell(leftCell);
+
+
+            // RIGHT → Date
+            PdfPCell rightCell = new PdfPCell(
+                    new Phrase(
+                            "Date: " + (r.getReceiptDate() != null
+                                    ? r.getReceiptDate().format(DateTimeFormatter.ofPattern("dd-MM-yyyy"))
+                                    : "______"),
+                            new Font(Font.FontFamily.HELVETICA, 10, Font.BOLD)
+                    )
+            );
+            rightCell.setBorder(PdfPCell.NO_BORDER);
+            rightCell.setHorizontalAlignment(Element.ALIGN_RIGHT);
+            metaTable.addCell(rightCell);
+
+            document.add(metaTable);
+
+            LineSeparator line = new LineSeparator();
+            line.setLineWidth(1.2f);
+            line.setPercentage(100);
+            line.setLineColor(BaseColor.BLACK);
+            document.add(line);
 
             String amountInWords = convertToWords(r.getPaidAmount());
 
             Paragraph receivedPara = new Paragraph();
             receivedPara.setAlignment(Element.ALIGN_LEFT);
+            receivedPara.setSpacingBefore(15f);
             receivedPara.setSpacingAfter(20f);
 
-// Build the text with proper spacing
+            // Build the text with proper spacing
             receivedPara.add(new Phrase("Received with thanks from: ", new Font(Font.FontFamily.HELVETICA, 11, Font.BOLD)));
 
-// Underlined student name with space
+            // Underlined student name with space
             Phrase studentNamePhrase = new Phrase("  " + r.getStudent().getFullName() + "  ",
                     new Font(Font.FontFamily.HELVETICA, 11, Font.UNDERLINE));
             receivedPara.add(studentNamePhrase);
 
             receivedPara.add(new Phrase("the sum of: ", new Font(Font.FontFamily.HELVETICA, 11, Font.BOLD)));
 
-// Underlined amount with space
+            // Underlined amount with space
             String amountText = r.getPaidAmount() != null ? String.format("%,.2f", r.getPaidAmount()) : "______";
             Phrase amountPhrase = new Phrase("  Rs. " + amountText + "  ",
                     new Font(Font.FontFamily.HELVETICA, 11, Font.UNDERLINE));
@@ -404,7 +365,7 @@ public class BillService {
 
             receivedPara.add(new Phrase("in words: ", new Font(Font.FontFamily.HELVETICA, 11, Font.BOLD)));
 
-// Underlined amount in words with space
+            // Underlined amount in words with space
             Phrase amountWordsPhrase = new Phrase("  " + amountInWords + "  ",
                     new Font(Font.FontFamily.HELVETICA, 11, Font.UNDERLINE));
             receivedPara.add(amountWordsPhrase);
@@ -421,7 +382,7 @@ public class BillService {
             infoTable.addCell(createSimpleCell("O/A of " + (r.getReceiptNo() != null ? r.getReceiptNo() : "______"),
                     Element.ALIGN_LEFT, false));
             infoTable.addCell(createSimpleCell("Class: " + r.getStudent().getStudentClass(),
-                    Element.ALIGN_RIGHT, false));
+                    Element.ALIGN_RIGHT, true));
 
             infoTable.setSpacingAfter(15f);
             document.add(infoTable);
@@ -480,6 +441,15 @@ public class BillService {
                 remarksPara.setSpacingAfter(10f);
                 document.add(remarksPara);
             }
+
+            // Disclaimer text at the bottom
+            Paragraph disclaimer = new Paragraph(
+                    "Note: Fees once paid are not refundable.",
+                    new Font(Font.FontFamily.HELVETICA, 14, Font.BOLD, BaseColor.GRAY)
+            );
+            disclaimer.setAlignment(Element.ALIGN_CENTER);
+            disclaimer.setSpacingBefore(30f); // space before disclaimer
+            document.add(disclaimer);
 
             // Use your existing signature function
             document.add(Chunk.NEWLINE);
