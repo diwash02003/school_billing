@@ -1,0 +1,18 @@
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN"
+        "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+
+
+<mapper namespace="com.example.demo.mappers.DashboardMapper">
+
+    <resultMap id="DashboardSummaryResult" type="com.example.demo.dtos.DashboardSummary">
+        <result property="totalActiveStudents" column="total_active_students"/>
+        <result property="totalRevenueCollected" column="total_revenue_collected"/>
+        <result property="totalDueLeft" column="total_due_left"/>
+    </resultMap>
+
+    <select id="getDashboardSummary" resultMap="DashboardSummaryResult">
+        SELECT (SELECT COUNT(*) FROM students WHERE is_active = true)                       AS total_active_students,
+               (SELECT COALESCE(SUM(paid_amount), 0) FROM receipts)                         AS total_revenue_collected,
+               (SELECT COALESCE(SUM(previous_due), 0) FROM students WHERE is_active = true) AS total_due_left
+    </select>
+</mapper>
