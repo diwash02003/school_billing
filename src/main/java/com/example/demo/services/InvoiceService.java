@@ -4,10 +4,10 @@ import com.example.demo.dtos.InvoiceFormDataDTO;
 import com.example.demo.dtos.InvoiceRequestDTO;
 import com.example.demo.dtos.InvoiceResponseDTO;
 import com.example.demo.dtos.InvoiceStatusDTO;
-import com.example.demo.repositories.PaymentRepository;
 import com.example.demo.exceptions.PaymentValidationException;
 import com.example.demo.models.Invoice;
 import com.example.demo.models.Student;
+import com.example.demo.repositories.PaymentRepository;
 import com.example.demo.repositories.StudentRepository;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
@@ -16,7 +16,6 @@ import org.springframework.transaction.annotation.Transactional;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Optional;
-import java.util.stream.Collectors;
 
 /**
  * @author diwash
@@ -55,7 +54,7 @@ public class InvoiceService {
                 .toList();
         List<String> duplicateMonths = req.getMonths().stream()
                 .filter(paidMonths::contains)
-                .collect(Collectors.toList());
+                .toList();
         if (!duplicateMonths.isEmpty()) {
             throw new PaymentValidationException("Months already invoiced: " + String.join(", ", duplicateMonths));
         }
@@ -82,7 +81,7 @@ public class InvoiceService {
         return paymentRepository.findByStudentIdOrderByPaymentDateDesc(studentId)
                 .stream()
                 .map(this::convertToDTO)
-                .collect(Collectors.toList());
+                .toList();
     }
 
     private InvoiceResponseDTO convertToDTO(Invoice p) {
@@ -127,8 +126,12 @@ public class InvoiceService {
         }
         Student student = studentOpt.get();
         boolean hasPaidAdmission = paymentRepository.existsByStudentIdAndAdmissionFeePaid(studentId);
+
         List<String> paidMonths = getPaidMonths(studentId);
-        List<String> availableMonths = NEPALI_MONTHS.stream().filter(month -> !paidMonths.contains(month)).collect(Collectors.toList());
+        List<String> availableMonths = NEPALI_MONTHS.stream()
+                .filter(month -> !paidMonths.contains(month))
+                .toList();
+
         return new InvoiceStatusDTO(hasPaidAdmission, paidMonths, availableMonths, student.getPreviousDue());
     }
 

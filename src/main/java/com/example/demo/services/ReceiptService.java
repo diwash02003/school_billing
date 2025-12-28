@@ -12,7 +12,6 @@ import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
 import java.util.List;
-import java.util.stream.Collectors;
 
 /**
  * @author diwash
@@ -63,7 +62,7 @@ public class ReceiptService {
         return receiptRepository.findByStudentIdOrderByReceiptDateDesc(studentId)
                 .stream()
                 .map(this::convertToDTO)
-                .collect(Collectors.toList());
+                .toList();
     }
 
     private ReceiptResponseDTO convertToDTO(Receipt r) {

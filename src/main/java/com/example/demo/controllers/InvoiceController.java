@@ -1,15 +1,15 @@
 package com.example.demo.controllers;
 
-import com.example.demo.dtos.*;
+import com.example.demo.dtos.InvoiceFormDataDTO;
+import com.example.demo.dtos.InvoiceRequestDTO;
+import com.example.demo.dtos.InvoiceResponseDTO;
+import com.example.demo.dtos.InvoiceStatusDTO;
 import com.example.demo.services.BillService;
 import com.example.demo.services.InvoiceService;
-
 import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
 import org.springframework.http.*;
 import org.springframework.web.bind.annotation.*;
-import com.example.demo.dtos.InvoiceRequestDTO;
-import com.example.demo.dtos.InvoiceResponseDTO;
 
 import java.util.List;
 
@@ -23,7 +23,6 @@ import java.util.List;
 @RestController
 @RequestMapping("/api/payments")
 @RequiredArgsConstructor
-@CrossOrigin(origins = {"http://localhost:3000", "http://billing.com", "http://www.billing.com"})
 public class InvoiceController {
     private final InvoiceService invoiceService;
     private final BillService billService;
